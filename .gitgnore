@@ -29,3 +29,17 @@ terraform.rc
 # Text files
 *.txt
 *.hcl
+
+
+# CLI configuration files
+.terraformrc
+terraform.rc
+
+# Terraform plans
+*.tfplan
+
+# Dependency lock file
+.terraform.lock.hcl
+
+# Text files
+*.txt
