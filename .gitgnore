@@ -32,9 +32,9 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
-
+.hcl
 # Ignore lock file (Note: HashiCorp recommends committing .terraform.lock.hcl for consistency,
 # uncomment below only if you specifically want to ignore it)
 # .terraform.lock.hcl
 
-setup.txt
+.txt
