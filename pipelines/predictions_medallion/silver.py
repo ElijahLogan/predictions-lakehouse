@@ -1,5 +1,6 @@
 import re
 import unicodedata
+from pyspark.sql import functions as F
 
 SILVER_START_DATE = spark.conf.get("silver_start_date", "2026-08-21")
 
