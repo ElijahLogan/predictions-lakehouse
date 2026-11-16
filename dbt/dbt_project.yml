@@ -1,0 +1,17 @@
+name: prediction_lakehouse
+version: "1.0.0"
+config-version: 2
+profile: prediction_lakehouse
+
+model-paths: ["models"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+models:
+  prediction_lakehouse:
+    intermediate:
+      +materialized: view
+      +schema: intermediate
+    gold:
+      +materialized: table
+      +schema: gold
