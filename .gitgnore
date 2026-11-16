@@ -30,7 +30,7 @@ terraform.rc
 *.txt
 *.hcl
 
-
+dbt/.venv/
 # CLI configuration files
 .terraformrc
 terraform.rc
