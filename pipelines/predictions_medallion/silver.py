@@ -150,3 +150,48 @@ dlt.apply_changes(
     stored_as_scd_type=2,
     track_history_column_list=["predicted_value"],   # new version only if the prediction itself changes
 )
+
+# ---------------------------------------------------------------------------
+# Actuals: one row per game date, player, and team, at the latest snapshot (SCD Type 1)
+# ---------------------------------------------------------------------------
+
+BOX_SCORE_KEY = ["game_date", "player_key", "player_team"]
+
+
+@dlt.view(name="box_score_rows_staged")
+@dlt.expect_or_drop("has_player", "player_key IS NOT NULL AND player_key <> ''")
+@dlt.expect_or_drop("has_game_date", "game_date IS NOT NULL")
+def box_score_rows_staged():
+    player_name = F.when(
+        F.col("starters").rlike(MOJIBAKE),
+        F.decode(F.encode(F.col("starters"), "ISO-8859-1"), "UTF-8"),
+    ).otherwise(F.col("starters"))
+
+    return (
+        spark.readStream.table("predictions.bronze.player_box_scores")
+        .withColumn("game_date", F.make_date("year", "month", "day"))
+        .where(F.col("game_date") >= F.lit(SILVER_START_DATE).cast("date"))
+        .withColumn("player_name", F.trim(player_name))
+        .where(F.col("player_name") != BASELINE_PLAYER)
+        .withColumn("player_key", player_key("player_name"))
+        .withColumn("opposing_team", F.regexp_replace("opposing_team", r",\s*$", ""))   # "MEM," -> "MEM"
+        .withColumn("is_away", F.col("away") == "Yes")
+        .withColumn("did_play", F.col("minutes_played") > 0)
+        .drop("starters", "away", "year", "month", "day")
+        # Each snapshot repeats the whole season. Keep one copy of each player-game per snapshot.
+        .dropDuplicates(BOX_SCORE_KEY + ["_file_name"])
+    )
+
+
+dlt.create_streaming_table(
+    name="predictions.silver.player_box_scores",
+    comment="One row per game date, player, and team, at the latest snapshot. did_play = minutes > 0.",
+)
+
+dlt.apply_changes(
+    target="predictions.silver.player_box_scores",
+    source="box_score_rows_staged",
+    keys=BOX_SCORE_KEY,
+    sequence_by=F.col("_snapshot_at"),      # newest snapshot wins, so the API's corrections flow through
+    stored_as_scd_type=1,
+)
