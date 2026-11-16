@@ -1,0 +1,18 @@
+version: 2
+
+models:
+  - name: fct_prediction_outcomes
+    description: Every current prediction next to its actual value, with error measures and an outcome status.
+    columns:
+      - name: outcome_status
+        data_tests:
+          - not_null
+          - accepted_values:
+              arguments:
+                values: ["evaluated", "did_not_play", "not_played_yet", "no_box_score"]
+  - name: model_leaderboard
+    description: Accuracy per model and stat, compared with each model's own baseline.
+  - name: model_daily_performance
+    description: Daily and rolling 7-game-day accuracy per model and stat.
+  - name: pipeline_match_rate
+    description: Share of predictions for past games that found a box score, per day.

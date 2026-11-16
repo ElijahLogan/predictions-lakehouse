@@ -1,0 +1,22 @@
+version: 2
+
+sources:
+  - name: silver
+    database: predictions
+    schema: silver
+    tables:
+      - name: player_predictions
+        description: SCD Type 2. The current version of each key has __END_AT null.
+        columns:
+          - name: player_key
+            data_tests: [not_null]
+          - name: target
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ["points", "assists", "total_rebounds"]
+      - name: model_baselines
+      - name: player_box_scores
+        columns:
+          - name: player_key
+            data_tests: [not_null]
