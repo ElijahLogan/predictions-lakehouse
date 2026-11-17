@@ -195,3 +195,38 @@ dlt.apply_changes(
     sequence_by=F.col("_snapshot_at"),      # newest snapshot wins, so the API's corrections flow through
     stored_as_scd_type=1,
 )
+
+PROP_LINE_KEY = ["game_date", "player_key", "target", "bookmaker", "side"]
+
+@dlt.view
+@dlt.expect_or_drop("has_line", "line IS NOT NULL")
+@dlt.expect_or_drop("known_target", "target IN ('points', 'total_rebounds', 'assists')")
+def prop_line_rows():
+    return (
+        spark.readStream.table("predictions.bronze.player_prop_lines")
+        .where(F.col("game_date") >= SILVER_START_DATE)
+        .select(
+            F.to_date("game_date").alias("game_date"),
+            "event_id",
+            F.to_timestamp("commence_time").alias("commence_time"),
+            "home_team", "away_team", "bookmaker",
+            F.col("stat").alias("target"),
+            "player_name",
+            player_key(F.col("player_name")).alias("player_key"),
+            F.lower("side").alias("side"),
+            "line", "price",
+            F.to_timestamp("last_update").alias("book_updated_at"),
+            F.to_timestamp("snapshot_at", "yyyyMMdd'T'HHmmss'Z'").alias("snapshot_at"),
+            "_file_name",
+        )
+    )
+
+dlt.create_streaming_table("predictions.silver.player_prop_lines")
+dlt.apply_changes(
+    target="predictions.silver.player_prop_lines",
+    source="prop_line_rows",
+    keys=PROP_LINE_KEY,
+    sequence_by="snapshot_at",
+    stored_as_scd_type=2,
+    track_history_column_list=["line", "price"],
+)

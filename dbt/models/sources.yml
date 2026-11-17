@@ -20,3 +20,18 @@ sources:
         columns:
           - name: player_key
             data_tests: [not_null]
+      - name: player_prop_lines
+        description: SCD Type 2 on line and price. Each version is one line move.
+        columns:
+          - name: player_key
+            data_tests: [not_null]
+          - name: target
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ["points", "assists", "total_rebounds"]
+          - name: side
+            data_tests:
+              - accepted_values:
+                  arguments:
+                    values: ["over", "under"]
