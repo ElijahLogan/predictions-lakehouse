@@ -69,3 +69,23 @@ def player_box_scores():
         )
         .withColumn("_ingested_at", F.current_timestamp())
     )
+
+PROP_LINE_SCHEMA = (
+    "event_id STRING, commence_time STRING, away_team STRING, home_team STRING, "
+    "bookmaker STRING, market STRING, stat STRING, player_name STRING, side STRING, "
+    "line DOUBLE, price INT, last_update STRING, snapshot_at STRING, game_date STRING"
+)
+
+@dlt.table(name="predictions.bronze.player_prop_lines")
+def bronze_player_prop_lines():
+    return (
+        spark.readStream.format("cloudFiles")
+        .option("cloudFiles.format", "csv")
+        .option("header", "true")
+        .option("cloudFiles.partitionColumns", "game_date")
+        .option("rescuedDataColumn", "_rescued_data")
+        .schema(PROP_LINE_SCHEMA)
+        .load(f"{LANDING}/odds")
+        .withColumn("_file_name", F.col("_metadata.file_name"))
+        .withColumn("_ingested_at", F.current_timestamp())
+    )
